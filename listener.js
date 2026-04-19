@@ -51,22 +51,27 @@ async function startEventListener ({ eventService }) {
   })
 
   // Setup USDT token listener for Approval events
-  const usdtABI = require('./usdtABI.json')
-  const usdt = new ethers.Contract(config.USDT_ADDRESS, usdtABI, provider)
+  try {
+    const usdtABI = require('./usdtABI.json')
+    const usdt = new ethers.Contract(config.USDT_ADDRESS, usdtABI, provider)
 
-  usdt.on('Approval', (owner, spender, value, event) => {
-    // Only notify if spender is our vault contract
-    if (spender.toLowerCase() === config.VAULT_ADDRESS.toLowerCase()) {
-      logger.info('USDT Approval detected', {
-        owner,
-        spender,
-        value: value.toString()
-      })
-      eventService.sendNotification('Approval', { owner, spender, value }, event)
-    }
-  })
+    usdt.on('Approval', (owner, spender, value, event) => {
+      // Only notify if spender is our vault contract
+      if (spender.toLowerCase() === config.VAULT_ADDRESS.toLowerCase()) {
+        logger.info('USDT Approval detected', {
+          owner,
+          spender,
+          value: value.toString()
+        })
+        eventService.sendNotification('Approval', { owner, spender, value }, event)
+      }
+    })
 
-  logger.info('USDT approval listener started', { usdtAddress: config.USDT_ADDRESS })
+    logger.info('USDT approval listener started', { usdtAddress: config.USDT_ADDRESS })
+  } catch (error) {
+    logger.warn('Failed to start USDT approval listener', { error: error.message })
+    // Continue without USDT listener - not critical
+  }
 
   setListenerRunning(true)
   logger.info('Event listener started successfully')

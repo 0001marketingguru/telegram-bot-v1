@@ -85,8 +85,10 @@ process.once('SIGTERM', () => {
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught exception', { error: error.message, stack: error.stack })
   setLastError(error)
+  // Don't exit - let the bot continue running
 })
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled rejection', { reason, promise })
+  logger.error('Unhandled rejection', { reason: reason?.message || reason, promise })
+  // Don't exit - let the bot continue running
 })
