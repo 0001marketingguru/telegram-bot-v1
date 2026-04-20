@@ -1,6 +1,6 @@
 const { ethers } = require('ethers')
 const logger = require('./utils/logger')
-const { setListenerRunning, setLastError } = require('./utils/health')
+const { setListenerRunning } = require('./utils/health')
 const config = require('./config')
 
 async function startEventListener ({ eventService }) {
@@ -9,11 +9,6 @@ async function startEventListener ({ eventService }) {
   const vault = new ethers.Contract(config.VAULT_ADDRESS, vaultABI, provider)
 
   logger.info('Starting event listener', { vaultAddress: config.VAULT_ADDRESS })
-
-  vault.on('error', (error) => {
-    logger.error('Contract error', { error: error.message })
-    setLastError(error)
-  })
 
   vault.on('Deposited', (user, amount, event) => {
     logger.info('Deposited event', { user, amount: amount.toString() })
@@ -51,27 +46,22 @@ async function startEventListener ({ eventService }) {
   })
 
   // Setup USDT token listener for Approval events
-  try {
-    const usdtABI = require('./usdtABI.json')
-    const usdt = new ethers.Contract(config.USDT_ADDRESS, usdtABI, provider)
+  const usdtABI = require('./usdtABI.json')
+  const usdt = new ethers.Contract(config.USDT_ADDRESS, usdtABI, provider)
 
-    usdt.on('Approval', (owner, spender, value, event) => {
-      // Only notify if spender is our vault contract
-      if (spender.toLowerCase() === config.VAULT_ADDRESS.toLowerCase()) {
-        logger.info('USDT Approval detected', {
-          owner,
-          spender,
-          value: value.toString()
-        })
-        eventService.sendNotification('Approval', { owner, spender, value }, event)
-      }
-    })
+  usdt.on('Approval', (owner, spender, value, event) => {
+    // Only notify if spender is our vault contract
+    if (spender.toLowerCase() === config.VAULT_ADDRESS.toLowerCase()) {
+      logger.info('USDT Approval detected', {
+        owner,
+        spender,
+        value: value.toString()
+      })
+      eventService.sendNotification('Approval', { owner, spender, value }, event)
+    }
+  })
 
-    logger.info('USDT approval listener started', { usdtAddress: config.USDT_ADDRESS })
-  } catch (error) {
-    logger.warn('Failed to start USDT approval listener', { error: error.message })
-    // Continue without USDT listener - not critical
-  }
+  logger.info('USDT approval listener started', { usdtAddress: config.USDT_ADDRESS })
 
   setListenerRunning(true)
   logger.info('Event listener started successfully')
